@@ -17,6 +17,7 @@ variable "environment" {
 variable "sg_tags" {
   default = {}
 }
+
 variable "mongodb_sg_ingress_rules" {
   default = [
     {

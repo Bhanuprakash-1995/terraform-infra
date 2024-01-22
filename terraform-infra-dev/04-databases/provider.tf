@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket         = "robo-bucket-bk-01"
-    key            = "terraform-infra-dev"
+    bucket         = "roboshop-01"
+    key            = "terraform-infra-dev2"
     region         = "us-east-1"
     dynamodb_table = "roboshopapp-lock"
   }

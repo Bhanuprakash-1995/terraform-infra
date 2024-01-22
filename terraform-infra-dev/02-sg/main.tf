@@ -2,7 +2,7 @@ module "vpn" {
   source         = "../../terraform-aws-security-groups"
   project_name   = var.project_name
   environment    = var.environment
-  vpc_id         = data.aws_ssm_parameter.default_vpc_id.value
+  vpc_id         = data.aws_vpc.default.id
   sg_name        = "vpn"
   sg_description = "SG for vpn"
 }
@@ -117,23 +117,15 @@ module "app_alb" {
   sg_description = "SG for App ALB"
 }
 
+#openvpn
 resource "aws_security_group_rule" "vpn_home" {
   security_group_id = module.vpn.sg_id
   type              = "ingress"
   from_port         = 0
   to_port           = 65535
   protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+  cidr_blocks       = ["0.0.0.0/0"] #ideally your home public IP address, but it frequently changes
 }
-
-# resource "aws_security_group_rule" "vpn" {
-#   security_group_id = module.vpn.sg_id
-#   type              = "ingress"
-#   from_port         = 22
-#   to_port           = 22
-#   protocol          = "tcp"
-#   cidr_blocks       = ["0.0.0.0/0"]
-# }
 
 resource "aws_security_group_rule" "mongodb_vpn" {
   type                     = "ingress"
@@ -169,6 +161,15 @@ resource "aws_security_group_rule" "redis_vpn" {
   protocol                 = "tcp"
   source_security_group_id = module.vpn.sg_id
   security_group_id        = module.redis.sg_id
+}
+
+resource "aws_security_group_rule" "mysql_vpn" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id        = module.mysql.sg_id
 }
 
 resource "aws_security_group_rule" "redis_user" {

@@ -14,4 +14,4 @@ export CLIENT=devops76s
 export PASS=1
 curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
 chmod +x openvpn-install.sh
-sudo ./openvpn-install.sh
+./openvpn-install.sh

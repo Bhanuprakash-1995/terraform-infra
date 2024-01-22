@@ -46,6 +46,7 @@ resource "null_resource" "mongodb" {
   }
 }
 
+
 module "redis" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   ami                    = data.aws_ami.sample_data_source.image_id
@@ -66,7 +67,7 @@ module "redis" {
   )
 }
 
-resource "null_resource" "mongodb" {
+resource "null_resource" "redis" {
   # Changes to any instance of the cluster requires re-provisioning
   triggers = {
     instance_id = module.redis.id
@@ -101,7 +102,7 @@ module "mysql" {
   instance_type          = "t3.small"
   vpc_security_group_ids = [data.aws_ssm_parameter.mysql_sg_id.value]
   subnet_id              = local.database_subnet_id
-  iam_instance_profile   = "ec2-role"
+  iam_instance_profile   = "roboshopapp-role"
 
 
   tags = merge(
@@ -115,7 +116,7 @@ module "mysql" {
   )
 }
 
-resource "null_resource" "mongodb" {
+resource "null_resource" "mysql" {
   # Changes to any instance of the cluster requires re-provisioning
   triggers = {
     instance_id = module.mysql.id
@@ -150,7 +151,7 @@ module "rabbitmq" {
   instance_type          = "t3.small"
   vpc_security_group_ids = [data.aws_ssm_parameter.rabbitmq_sg_id.value]
   subnet_id              = local.database_subnet_id
-  iam_instance_profile   = "ec2-role"
+  iam_instance_profile   = "roboshopapp-role"
 
 
   tags = merge(
