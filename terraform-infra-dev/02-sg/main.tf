@@ -216,6 +216,14 @@ resource "aws_security_group_rule" "catalogue_vpn" {
   source_security_group_id = module.vpn.sg_id
   security_group_id        = module.catalogue.sg_id
 }
+resource "aws_security_group_rule" "catalogue_vpn_http" {
+  type                     = "ingress"
+  from_port                = 8080
+  to_port                  = 8080
+  protocol                 = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id        = module.catalogue.sg_id
+}
 
 resource "aws_security_group_rule" "catalogue_app_alb" {
   type                     = "ingress"
@@ -243,6 +251,15 @@ resource "aws_security_group_rule" "catalogue_app_alb" {
 #   source_security_group_id = module.cart.sg_id
 #   security_group_id        = module.catalogue.sg_id
 # }
+# App ALB should accept connections only from VPN, Since it is internal
+resource "aws_security_group_rule" "app_alb_vpn" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  source_security_group_id = module.vpn.sg_id
+  security_group_id        = module.app_alb.sg_id
+}
 
 resource "aws_security_group_rule" "user_vpn" {
   type                     = "ingress"
