@@ -22,5 +22,5 @@ variable "common_tags" {
 }
 
 variable "zone_name" {
-  default = "roboshopapp.website"
+  default = "daws86s.online"
 }
