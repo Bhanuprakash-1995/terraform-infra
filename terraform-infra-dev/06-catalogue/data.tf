@@ -30,3 +30,7 @@ data "aws_ami" "sample_data_source" {
     values = ["hvm"]
   }
 }
+
+data "aws_ssm_parameter" "app_alb_listener_arn" {
+  name = "/${var.project_name}/${var.environment}/app_alb_listener_arn"
+}

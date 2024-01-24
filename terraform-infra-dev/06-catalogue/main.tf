@@ -1,8 +1,9 @@
 resource "aws_lb_target_group" "catalogue" {
-  name     = "${local.name}-${var.tags.Component}"
-  port     = 8080
-  protocol = "HTTP"
-  vpc_id   = data.aws_ssm_parameter.vpc_id.value
+  name                 = "${local.name}-${var.tags.Component}"
+  port                 = 8080
+  protocol             = "HTTP"
+  vpc_id               = data.aws_ssm_parameter.vpc_id.value
+  deregistration_delay = 60
   health_check {
     healthy_threshold   = 2
     interval            = 10
@@ -97,5 +98,68 @@ resource "aws_launch_template" "catalogue" {
       Name = "${local.name}-${var.tags.Component}"
     }
   }
+  depends_on = [null_resource.catalogue_delete, aws_ami_from_instance.catalogue]
+}
 
+resource "aws_autoscaling_group" "catalogue" {
+  name                      = "${local.name}-${var.tags.Component}"
+  max_size                  = 10
+  min_size                  = 1
+  health_check_grace_period = 60
+  health_check_type         = "ELB"
+  desired_capacity          = 2
+  target_group_arns         = [aws_lb_target_group.catalogue.arn]
+  launch_template {
+    id      = aws_launch_template.catalogue.id
+    version = aws_launch_template.catalogue.latest_version
+  }
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+    triggers = ["launch_template"]
+  }
+  vpc_zone_identifier = split(",", data.aws_ssm_parameter.private_subnet_ids.value)
+  tag {
+    key                 = "Name"
+    value               = "${local.name}-${var.tags.Component}"
+    propagate_at_launch = true
+  }
+  timeouts {
+    delete = "15m"
+  }
+  depends_on = [aws_lb_target_group.catalogue, aws_launch_template.catalogue]
+}
+
+resource "aws_lb_listener_rule" "catalogue" {
+  listener_arn = data.aws_ssm_parameter.app_alb_listener_arn.value
+  priority     = 10
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.catalogue.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${var.tags.Component}.app-${var.environment}.${var.zone_name}"]
+    }
+  }
+  depends_on = [aws_lb_target_group.catalogue]
+}
+
+resource "aws_autoscaling_policy" "catalogue" {
+  # ... other configuration ...
+  autoscaling_group_name = aws_autoscaling_group.catalogue.name
+  name                   = "${local.name}-${var.tags.Component}"
+  policy_type            = "TargetTrackingScaling"
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+
+    target_value = 5.0
+  }
+  depends_on = [aws_autoscaling_group.catalogue]
 }
