@@ -34,10 +34,10 @@ resource "aws_lb_listener" "https" {
 # web-dev.daws86s.online
 module "records" {
   source    = "terraform-aws-modules/route53/aws//modules/records"
-  zone_name = var.zone_name
+  zone_name = var.zone_name #daws86s.online
   records = [
     {
-      name = "web-${var.environment}" # web-dev
+      name = "web-${var.environment}" # web-dev.daws86s.online
       type = "A"
       alias = {
         name    = aws_lb.web_alb.dns_name

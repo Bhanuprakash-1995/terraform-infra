@@ -1,5 +1,5 @@
 resource "aws_lb_target_group" "web" {
-  name                 = "${local.name}-${var.tags.Component}"
+  name                 = "${local.name}-${var.tags.Component}" #roboshop-dev-web
   port                 = 80
   protocol             = "HTTP"
   vpc_id               = data.aws_ssm_parameter.vpc_id.value
@@ -18,7 +18,7 @@ resource "aws_lb_target_group" "web" {
 module "web" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   ami                    = data.aws_ami.sample_data_source.image_id
-  name                   = "${local.name}-${var.tags.Component}-ami"
+  name                   = "${local.name}-${var.tags.Component}-ami" #roboshop-dev-web-ami
   instance_type          = "t2.micro"
   vpc_security_group_ids = [data.aws_ssm_parameter.web_sg_id.value]
   subnet_id              = element(split(",", data.aws_ssm_parameter.private_subnet_ids.value), 0)
@@ -82,7 +82,7 @@ resource "null_resource" "web_delete" {
 }
 
 resource "aws_launch_template" "web" {
-  name = "${local.name}-${var.tags.Component}" #roboshop-dev-web-alb
+  name = "${local.name}-${var.tags.Component}" #roboshop-dev-web
 
   image_id                             = aws_ami_from_instance.web.id
   instance_initiated_shutdown_behavior = "terminate"
@@ -95,19 +95,20 @@ resource "aws_launch_template" "web" {
     resource_type = "instance"
 
     tags = {
-      Name = "${local.name}-${var.tags.Component}" #roboshop-dev-web-alb
+      Name = "${local.name}-${var.tags.Component}" #roboshop-dev-web
     }
   }
   depends_on = [null_resource.web_delete, aws_ami_from_instance.web]
 }
 
 resource "aws_autoscaling_group" "web" {
-  name                      = "${local.name}-${var.tags.Component}"
+  name                      = "${local.name}-${var.tags.Component}" #roboshop-dev-web
   max_size                  = 10
   min_size                  = 1
   health_check_grace_period = 60
   health_check_type         = "ELB"
   desired_capacity          = 2
+  vpc_zone_identifier       = split(",", data.aws_ssm_parameter.private_subnet_ids.value)
   target_group_arns         = [aws_lb_target_group.web.arn]
   launch_template {
     id      = aws_launch_template.web.id
@@ -120,10 +121,9 @@ resource "aws_autoscaling_group" "web" {
     }
     triggers = ["launch_template"]
   }
-  vpc_zone_identifier = split(",", data.aws_ssm_parameter.private_subnet_ids.value)
   tag {
     key                 = "Name"
-    value               = "${local.name}-${var.tags.Component}"
+    value               = "${local.name}-${var.tags.Component}" #roboshop-dev-web
     propagate_at_launch = true
   }
   timeouts {
@@ -143,16 +143,15 @@ resource "aws_lb_listener_rule" "web" {
 
   condition {
     host_header {
-      values = ["${var.tags.Component}-${var.environment}.${var.zone_name}"] # web-dev-daws86s.online
+      values = ["${var.tags.Component}-${var.environment}.${var.zone_name}"] # web-dev.daws86s.online
     }
   }
   depends_on = [aws_lb_target_group.web]
 }
 
 resource "aws_autoscaling_policy" "web" {
-  # ... other configuration ...
   autoscaling_group_name = aws_autoscaling_group.web.name
-  name                   = "${local.name}-${var.tags.Component}"
+  name                   = "${local.name}-${var.tags.Component}" #roboshop-dev-web
   policy_type            = "TargetTrackingScaling"
   target_tracking_configuration {
     predefined_metric_specification {

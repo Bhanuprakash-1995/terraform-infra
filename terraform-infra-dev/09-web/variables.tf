@@ -10,7 +10,7 @@ variable "environment" {
 
 variable "tags" {
   default = {
-    Component = "web-alb"
+    Component = "web"
   }
 }
 variable "common_tags" {

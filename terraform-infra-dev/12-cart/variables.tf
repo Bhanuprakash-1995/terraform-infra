@@ -8,6 +8,11 @@ variable "environment" {
   default = "dev"
 }
 
+variable "tags" {
+  default = {
+    Component = "cart"
+  }
+}
 variable "common_tags" {
   default = {
     Project     = "roboshop"
@@ -18,4 +23,8 @@ variable "common_tags" {
 
 variable "zone_name" {
   default = "daws86s.online"
+}
+
+variable "iam_instance_profile" {
+  default = "roboshopapp-role"
 }

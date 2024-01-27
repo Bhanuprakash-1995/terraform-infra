@@ -3,8 +3,9 @@ resource "aws_acm_certificate" "daws86s" {
   validation_method = "DNS"
 
   tags = merge(
-    var.tags.Component,
+    var.tags,
     var.common_tags
+
   )
 
   lifecycle {

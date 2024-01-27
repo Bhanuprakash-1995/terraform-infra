@@ -29,6 +29,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+#.app-dev.daws86s.online
 module "records" {
   source    = "terraform-aws-modules/route53/aws//modules/records"
   zone_name = var.zone_name

@@ -1,9 +1,9 @@
 resource "aws_cloudfront_distribution" "daws86s" {
   enabled = true
-  aliases = ["web-${var.tags.Component}.${var.zone_name}"]
+  aliases = ["web-${var.tags.Component}.${var.zone_name}"] #web-cdn.daws86s.online
   origin {
-    domain_name = "web-${var.environment}.${var.zone_name}"
-    origin_id   = "web-${var.environment}.${var.zone_name}"
+    domain_name = "web-${var.environment}.${var.zone_name}" #web-cdn.daws86s.online
+    origin_id   = "web-${var.environment}.${var.zone_name}" #web-cdn.daws86s.online
     custom_origin_config {
       http_port              = 80
       https_port             = 443
@@ -14,7 +14,7 @@ resource "aws_cloudfront_distribution" "daws86s" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = "web-${var.environment}.${var.zone_name}"
+    target_origin_id       = "web-${var.environment}.${var.zone_name}" #web-dev.daws86s.online
     viewer_protocol_policy = "https-only"
     forwarded_values {
       headers      = []
@@ -43,7 +43,7 @@ module "records" {
   zone_name = var.zone_name
   records = [
     {
-      name = "web-cdn" # web-dev
+      name = "web-cdn"
       type = "A"
       alias = {
         name    = aws_cloudfront_distribution.daws86s.domain_name
