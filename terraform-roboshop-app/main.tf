@@ -1,5 +1,5 @@
 resource "aws_lb_target_group" "component" {
-  name                 = "${local.name}-${var.tags.Component}" #roboshop-dev-catalogue
+  name                 = "${local.name}-${var.tags.Component}" #roboshop-dev-component
   port                 = 8080
   protocol             = "HTTP"
   vpc_id               = var.vpc_id
@@ -35,13 +35,13 @@ module "component" {
 resource "null_resource" "component" {
   # Changes to any instance of the cluster requires re-provisioning
   triggers = {
-    instance_id = module.catalogue.id
+    instance_id = module.component.id
   }
 
   # Bootstrap script can run on any instance of the cluster
   # So we just choose the first in this case
   connection {
-    host     = module.catalogue.private_ip
+    host     = module.component.private_ip
     type     = "ssh"
     user     = "centos"
     password = "DevOps321"
@@ -61,31 +61,31 @@ resource "null_resource" "component" {
 }
 
 resource "aws_ec2_instance_state" "component" {
-  instance_id = module.catalogue.id
+  instance_id = module.component.id
   state       = "stopped"
-  depends_on  = [null_resource.catalogue]
+  depends_on  = [null_resource.component]
 }
 
-resource "aws_ami_from_instance" "catalogue" {
+resource "aws_ami_from_instance" "component" {
   name               = "${local.name}-${var.tags.Component}-${local.current_time}"
-  source_instance_id = module.catalogue.id
-  depends_on         = [aws_ec2_instance_state.catalogue_instance_stop]
+  source_instance_id = module.component.id
+  depends_on         = [aws_ec2_instance_state.component]
 }
 
-resource "null_resource" "component" {
+resource "null_resource" "component_delete" {
   triggers = {
-    instance_id = module.catalogue.id
+    instance_id = module.component.id
   }
   provisioner "local-exec" {
-    command = "aws ec2 terminate-instances --instance-id ${module.catalogue.id}"
+    command = "aws ec2 terminate-instances --instance-id ${module.component.id}"
   }
-  depends_on = [aws_ami_from_instance.catalogue]
+  depends_on = [aws_ami_from_instance.component]
 }
 
 resource "aws_launch_template" "component" {
-  name = "${local.name}-${var.tags.Component}" #roboshop-dev-catalogue
+  name = "${local.name}-${var.tags.Component}" #roboshop-dev-component
 
-  image_id                             = aws_ami_from_instance.catalogue.id
+  image_id                             = aws_ami_from_instance.component.id
   instance_initiated_shutdown_behavior = "terminate"
   instance_type                        = "t2.micro"
   update_default_version               = true
@@ -99,7 +99,7 @@ resource "aws_launch_template" "component" {
       Name = "${local.name}-${var.tags.Component}"
     }
   }
-  depends_on = [null_resource.catalogue_delete, aws_ami_from_instance.catalogue]
+  depends_on = [null_resource.component_delete, aws_ami_from_instance.component]
 }
 
 resource "aws_autoscaling_group" "component" {
@@ -109,10 +109,10 @@ resource "aws_autoscaling_group" "component" {
   health_check_grace_period = 60
   health_check_type         = "ELB"
   desired_capacity          = 2
-  target_group_arns         = [aws_lb_target_group.catalogue.arn]
+  target_group_arns         = [aws_lb_target_group.component.arn]
   launch_template {
-    id      = aws_launch_template.catalogue.id
-    version = aws_launch_template.catalogue.latest_version
+    id      = aws_launch_template.component.id
+    version = aws_launch_template.component.latest_version
   }
   instance_refresh {
     strategy = "Rolling"
@@ -130,7 +130,7 @@ resource "aws_autoscaling_group" "component" {
   timeouts {
     delete = "15m"
   }
-  depends_on = [aws_lb_target_group.catalogue, aws_launch_template.catalogue]
+  depends_on = [aws_lb_target_group.component, aws_launch_template.component]
 }
 
 resource "aws_lb_listener_rule" "component" {
@@ -139,29 +139,29 @@ resource "aws_lb_listener_rule" "component" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.catalogue.arn
+    target_group_arn = aws_lb_target_group.component.arn
   }
 
   condition {
     host_header {
       values = ["${var.tags.Component}.app-${var.environment}.${var.zone_name}"]
-      #catalogue.app-dev.daws86s.online
+      #component.app-dev.daws86s.online
     }
   }
-  depends_on = [aws_lb_target_group.catalogue]
+  depends_on = [aws_lb_target_group.component]
 }
 
 resource "aws_autoscaling_policy" "component" {
   # ... other configuration ...
-  autoscaling_group_name = aws_autoscaling_group.catalogue.name
-  name                   = "${local.name}-${var.tags.Component}" #roboshop-dev-catalogue
+  autoscaling_group_name = aws_autoscaling_group.component.name
+  name                   = "${local.name}-${var.tags.Component}" #roboshop-dev-component
   policy_type            = "TargetTrackingScaling"
   target_tracking_configuration {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
 
-    target_value = 5.0
+    target_value = 75
   }
-  depends_on = [aws_autoscaling_group.catalogue]
+  depends_on = [aws_autoscaling_group.component]
 }

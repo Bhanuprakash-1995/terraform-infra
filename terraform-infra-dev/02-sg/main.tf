@@ -372,13 +372,21 @@ resource "aws_security_group_rule" "cart_app_alb" {
 
 resource "aws_security_group_rule" "shipping_vpn" {
   type                     = "ingress"
-  from_port                = 8080
-  to_port                  = 8080
+  from_port                = 22
+  to_port                  = 22
   protocol                 = "tcp"
   source_security_group_id = module.vpn.sg_id
   security_group_id        = module.shipping.sg_id
 }
 
+resource "aws_security_group_rule" "mysql_shipping" {
+  source_security_group_id = module.shipping.sg_id
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = module.mysql.sg_id
+}
 
 resource "aws_security_group_rule" "shipping_app_alb" {
   type                     = "ingress"
@@ -452,14 +460,14 @@ resource "aws_security_group_rule" "web_internet" {
   security_group_id = module.web.sg_id
 }
 
-resource "aws_security_group_rule" "app_alb_web" {
-  source_security_group_id = module.web.sg_id
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
-  protocol                 = "tcp"
-  security_group_id        = module.app_alb.sg_id
-}
+# resource "aws_security_group_rule" "app_alb_web" {
+#   source_security_group_id = module.web.sg_id
+#   type                     = "ingress"
+#   from_port                = 80
+#   to_port                  = 80
+#   protocol                 = "tcp"
+#   security_group_id        = module.app_alb.sg_id
+# }
 
 resource "aws_security_group_rule" "app_alb_catalogue" {
   source_security_group_id = module.catalogue.sg_id
