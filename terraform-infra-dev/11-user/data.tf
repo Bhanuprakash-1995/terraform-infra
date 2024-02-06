@@ -1,5 +1,5 @@
 data "aws_ssm_parameter" "vpc_id" {
-  name = "/${var.project_name}/${var.environment}/vpc_id"
+  name = "/${var.project_name}/${var.environment}/vpc_id" #/roboshop/dev/vpc_id
 }
 
 data "aws_ssm_parameter" "user_sg_id" {
